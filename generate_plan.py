@@ -25,6 +25,7 @@ BRANCH_CANDIDATE_LIMIT = 200   # per-step expansion limit in search
 SEARCH_TIME_LIMIT = 25.0       # seconds
 SEARCH_NODE_LIMIT = 350_000
 GREEDY_RUNS = 500             # multi-start greedy attempts for a strong baseline
+SECONDARY_WIDTH = 2.5        # width for dynamically built secondary corridors
 
 def snap(v: float) -> float:
     return round(v / GRID) * GRID
@@ -87,16 +88,8 @@ MAIN_CORRIDORS = [
     Rect(0.0, 3.0, 80.0, 4.0, label="main_lower"),
 ]
 
-SECONDARY_CORRIDORS = [
-    Rect(22.5, 7.0, 3.0, 26.0, label="spur_A"),
-    Rect(62.5, 7.0, 3.0, 26.0, label="spur_B"),
-]
-
-TERTIARY_CORRIDORS = [
-    Rect(0.0, 19.0, 80.0, 3.0, label="tertiary_mid"),  # allowed inside A/B; corridors occupy space, so booths won't overlap
-]
-
-CORRIDORS = MAIN_CORRIDORS + SECONDARY_CORRIDORS + TERTIARY_CORRIDORS
+# Will be populated at runtime (starts from MAIN_CORRIDORS, then anchor-driven corridors are added)
+CORRIDORS: List[Rect] = []
 
 # Inventory
 INVENTORY = {
@@ -199,12 +192,8 @@ def corridor_edges_for_zone(zone: str) -> List[Dict]:
             else:
                 edges.append({"type": "v", "side": "left", "x": x1, "y0": zb["y0"], "y1": zb["y1"]})
             continue
-        # Secondary spurs: only in their zones
-        if c.label == "spur_A" and zone == "A":
-            edges.append({"type": "v", "side": "right", "x": x0, "y0": max(y0, zb["y0"]), "y1": min(y1, zb["y1"])})
-            edges.append({"type": "v", "side": "left", "x": x1, "y0": max(y0, zb["y0"]), "y1": min(y1, zb["y1"])})
-            continue
-        if c.label == "spur_B" and zone == "B":
+        # Anchor-driven vertical corridors (both sides usable)
+        if c.label.startswith("anchor_vert"):
             edges.append({"type": "v", "side": "right", "x": x0, "y0": max(y0, zb["y0"]), "y1": min(y1, zb["y1"])})
             edges.append({"type": "v", "side": "left", "x": x1, "y0": max(y0, zb["y0"]), "y1": min(y1, zb["y1"])})
             continue
@@ -215,8 +204,8 @@ def corridor_edges_for_zone(zone: str) -> List[Dict]:
         if c.label == "main_lower":
             edges.append({"type": "h", "side": "bottom", "y": y1, "x0": max(x0, zb["x0"]), "x1": min(x1, zb["x1"])})
             continue
-        # tertiary corridor: allow both sides within zone
-        if c.label == "tertiary_mid":
+        # Anchor-driven horizontal corridors: allow both sides within zone
+        if c.label.startswith("anchor_horz"):
             edges.append({"type": "h", "side": "top", "y": y0, "x0": max(x0, zb["x0"]), "x1": min(x1, zb["x1"])})
             edges.append({"type": "h", "side": "bottom", "y": y1, "x0": max(x0, zb["x0"]), "x1": min(x1, zb["x1"])})
     return edges
@@ -267,6 +256,109 @@ def generate_candidates(area: int, zone: str) -> List[Rect]:
     cand_list = sorted(uniq.values(), key=dist)
     return cand_list[:MAX_CANDIDATES_PER_AREA]
 
+def anchor_edges_for_zone(zone: str) -> List[Dict]:
+    """Edges limited to entrance boundaries to position anchor booths."""
+    zb = ZONE_A if zone == "A" else ZONE_B
+    edges = []
+    # Along main vertical
+    if zone == "A":
+        edges.append({"type": "v", "side": "right", "x": 48.0, "y0": zb["y0"], "y1": zb["y1"]})
+    else:
+        edges.append({"type": "v", "side": "left", "x": 52.0, "y0": zb["y0"], "y1": zb["y1"]})
+    # Along top main corridor
+    edges.append({"type": "h", "side": "top", "y": 33.0, "x0": zb["x0"], "x1": zb["x1"]})
+    return edges
+
+def generate_anchor_candidates(area: int, zone: str) -> List[Rect]:
+    shapes = SHAPES[area]
+    edges = anchor_edges_for_zone(zone)
+    zb = ZONE_A if zone == "A" else ZONE_B
+    candidates: List[Rect] = []
+    for (w0, h0) in shapes:
+        w, h = snap(w0), snap(h0)
+        if max(w, h) / min(w, h) > 4.0001:
+            continue
+        for e in edges:
+            if e["type"] == "v":
+                x = e["x"] - w if e["side"] == "right" else e["x"]
+                y_start = e["y0"]
+                y_end = e["y1"] - h
+                y = y_start
+                while y <= y_end + 1e-6:
+                    r = Rect(snap(x), snap(y), w, h, zone=zone)
+                    if inside_zone(r, zb):
+                        candidates.append(r)
+                    y += STEP
+            else:
+                y = e["y"] - h if e["side"] == "top" else e["y"]
+                x_start = e["x0"]
+                x_end = e["x1"] - w
+                x = x_start
+                while x <= x_end + 1e-6:
+                    r = Rect(snap(x), snap(y), w, h, zone=zone)
+                    if inside_zone(r, zb):
+                        candidates.append(r)
+                    x += STEP
+    uniq = {}
+    for r in candidates:
+        key = (r.x, r.y, r.w, r.h)
+        uniq[key] = r
+    # prioritize distance to entrance top (50,40)
+    def dist(r: Rect):
+        cx = r.x + r.w / 2
+        cy = r.y + r.h / 2
+        return (cx - 50.0) ** 2 + (cy - 40.0) ** 2
+    return sorted(uniq.values(), key=dist)
+
+def anchor_corridor_feasible(anchor: Rect, zone: str) -> bool:
+    """Check if there is room to add vertical+horizontal corridors beside the anchor."""
+    zb = ZONE_A if zone == "A" else ZONE_B
+    vertical_ok = (
+        anchor.x - SECONDARY_WIDTH >= zb["x0"] - 1e-6 or
+        anchor.x + anchor.w + SECONDARY_WIDTH <= zb["x1"] + 1e-6
+    )
+    horizontal_ok = (
+        anchor.y - SECONDARY_WIDTH >= zb["y0"] - 1e-6 or
+        anchor.y + anchor.h + SECONDARY_WIDTH <= zb["y1"] + 1e-6
+    )
+    return vertical_ok and horizontal_ok
+
+def build_corridors_from_anchor(anchor: Rect, zone: str) -> List[Rect]:
+    """Construct vertical and horizontal secondary corridors (2.5m) adjacent to anchor."""
+    zb = ZONE_A if zone == "A" else ZONE_B
+    corrs: List[Rect] = []
+    # Vertical corridor inside the zone, touching anchor side
+    if anchor.x - SECONDARY_WIDTH >= zb["x0"] - 1e-6:
+        corrs.append(Rect(anchor.x - SECONDARY_WIDTH, zb["y0"], SECONDARY_WIDTH, zb["y1"] - zb["y0"], label=f"anchor_vert_{zone}"))
+    elif anchor.x + anchor.w + SECONDARY_WIDTH <= zb["x1"] + 1e-6:
+        corrs.append(Rect(anchor.x + anchor.w, zb["y0"], SECONDARY_WIDTH, zb["y1"] - zb["y0"], label=f"anchor_vert_{zone}"))
+    # Horizontal corridor touching anchor (prefer below anchor)
+    if anchor.y - SECONDARY_WIDTH >= zb["y0"] - 1e-6:
+        corrs.append(Rect(zb["x0"], anchor.y - SECONDARY_WIDTH, zb["x1"] - zb["x0"], SECONDARY_WIDTH, label=f"anchor_horz_{zone}"))
+    elif anchor.y + anchor.h + SECONDARY_WIDTH <= zb["y1"] + 1e-6:
+        corrs.append(Rect(zb["x0"], anchor.y + anchor.h, zb["x1"] - zb["x0"], SECONDARY_WIDTH, label=f"anchor_horz_{zone}"))
+    return corrs
+
+def place_anchor_for_zone(zone: str, remaining: Dict[int, int], blocking: List[Rect]) -> Tuple[Rect, List[Rect], int]:
+    """Place the largest available booth near entrance boundary and build corridors from it."""
+    areas = sorted([a for a, c in remaining.items() if c > 0], reverse=True)
+    for area in areas:
+        for cand in generate_anchor_candidates(area, zone):
+            if not anchor_corridor_feasible(cand, zone):
+                continue
+            if any(rects_overlap(cand, b) for b in blocking):
+                continue
+            if not touches_corridor(cand, MAIN_CORRIDORS):
+                continue
+            anchor = cand.copy(label=f"{zone}_anchor", zone=zone)
+            corrs = build_corridors_from_anchor(anchor, zone)
+            if any(rects_overlap(c, b) for c in corrs for b in blocking):
+                continue
+            if not corrs:
+                continue
+            remaining[area] -= 1
+            return anchor, corrs, area
+    return None, [], 0
 def branch_and_bound_layout(place_order: List[int], candidates_cache: Dict[Tuple[int, str], List[Rect]],
                             blocking: List[Rect]) -> List[Rect]:
     """Depth-first branch-and-bound with time/node limits."""
@@ -384,8 +476,12 @@ def booth_category(area: int) -> str:
     return "sm"
 
 def main():
-    # Build blocking rects = corridors
-    blocking = CORRIDORS.copy()
+    global CORRIDORS
+    # Start with main corridors only
+    corridors = MAIN_CORRIDORS.copy()
+    CORRIDORS = corridors
+    blocking = corridors.copy()
+
     # Place outer strips
     outer_booths, used_outer = layout_outer_strips(blocking)
     blocking += outer_booths  # treat outer booths as blocking for inner placements
@@ -394,6 +490,18 @@ def main():
     remaining = INVENTORY.copy()
     for a, c in used_outer.items():
         remaining[a] -= c
+
+    # Place anchors for zones A and B and build secondary corridors from them
+    anchors: List[Rect] = []
+    for zone in ["A", "B"]:
+        anchor, new_corrs, used_area = place_anchor_for_zone(zone, remaining, blocking)
+        if anchor:
+            anchors.append(anchor)
+            blocking.append(anchor)
+            corridors.extend(new_corrs)
+            blocking.extend(new_corrs)
+    # Update global corridors for subsequent steps
+    CORRIDORS = corridors
 
     # Build placement order (descending area, priority)
     place_order: List[int] = []
@@ -428,7 +536,7 @@ def main():
         else:
             skipped.append(a)
 
-    all_booths = outer_booths + relabeled_inner
+    all_booths = outer_booths + anchors + relabeled_inner
     # Validation: counts and area
     counts = {}
     total_area = 0
