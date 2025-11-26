@@ -1,0 +1,94 @@
+<svg baseProfile="full" height="400px" version="1.1" viewBox="0 0 80 40" width="800px" xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink">
+<rect fill="none" height="40" stroke="black" stroke-width="0.1" width="80" x="0" y="0"/>
+<rect fill="#ffcccc" height="40" opacity="0.5" width="4" x="48" y="0"/>
+<rect fill="#ffcccc" height="4" opacity="0.5" width="80" x="0" y="33"/>
+<rect fill="#ffcccc" height="4" opacity="0.5" width="80" x="0" y="3"/>
+<rect fill="#aaddff" height="3" stroke="black" stroke-width="0.1" width="10" x="0" y="37"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="5.0" y="38.5">30</text>
+<rect fill="#aaddff" height="3" stroke="black" stroke-width="0.1" width="10" x="10" y="37"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="15.0" y="38.5">30</text>
+<rect fill="#aaddff" height="3" stroke="black" stroke-width="0.1" width="10" x="20" y="37"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="25.0" y="38.5">30</text>
+<rect fill="#aaddff" height="3" stroke="black" stroke-width="0.1" width="10" x="30" y="37"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="35.0" y="38.5">30</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="6.75" x="40" y="37"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="43.375" y="38.5">20</text>
+<rect fill="#aaddff" height="3" stroke="black" stroke-width="0.1" width="10" x="52" y="37"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="57.0" y="38.5">30</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="6.75" x="62" y="37"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="65.375" y="38.5">20</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="6.75" x="68.75" y="37"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="72.125" y="38.5">20</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="4" x="75.5" y="37"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="77.5" y="38.5">12</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="6.75" x="0" y="0"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="3.375" y="1.5">20</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="6.75" x="6.75" y="0"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="10.125" y="1.5">20</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="6" x="13.5" y="0"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="16.5" y="1.5">18</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="6" x="19.5" y="0"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="22.5" y="1.5">18</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="6" x="25.5" y="0"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="28.5" y="1.5">18</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="6" x="31.5" y="0"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="34.5" y="1.5">18</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="6" x="37.5" y="0"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="40.5" y="1.5">18</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="4" x="43.5" y="0"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="45.5" y="1.5">12</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="5" x="52" y="0"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="54.5" y="1.5">15</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="5" x="57" y="0"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="59.5" y="1.5">15</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="5" x="62" y="0"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="64.5" y="1.5">15</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="5" x="67" y="0"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="69.5" y="1.5">15</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="4" x="72" y="0"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="74.0" y="1.5">12</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="4" x="76" y="0"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="78.0" y="1.5">12</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="4" x="52" y="15"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="54.0" y="16.5">12</text>
+<rect fill="#ccffcc" height="3" stroke="black" stroke-width="0.1" width="4" x="57" y="15"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="59.0" y="16.5">12</text>
+<rect fill="#ffaa88" height="10" stroke="black" stroke-width="0.1" width="20" x="0" y="23"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="10.0" y="28.0">200</text>
+<rect fill="#ffaa88" height="10" stroke="black" stroke-width="0.1" width="10" x="20" y="23"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="25.0" y="28.0">100</text>
+<rect fill="#ffaa88" height="10" stroke="black" stroke-width="0.1" width="10" x="30" y="23"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="35.0" y="28.0">100</text>
+<rect fill="#aaddff" height="9" stroke="black" stroke-width="0.1" width="10" x="0" y="14"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="5.0" y="18.5">90</text>
+<rect fill="#aaddff" height="9" stroke="black" stroke-width="0.1" width="10" x="10" y="14"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="15.0" y="18.5">90</text>
+<rect fill="#aaddff" height="8" stroke="black" stroke-width="0.1" width="10" x="20" y="15"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="25.0" y="19.0">80</text>
+<rect fill="#aaddff" height="8" stroke="black" stroke-width="0.1" width="10" x="30" y="15"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="35.0" y="19.0">80</text>
+<rect fill="#aaddff" height="6" stroke="black" stroke-width="0.1" width="10" x="0" y="8"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="5.0" y="11.0">60</text>
+<rect fill="#aaddff" height="6" stroke="black" stroke-width="0.1" width="10" x="10" y="8"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="15.0" y="11.0">60</text>
+<rect fill="#aaddff" height="6" stroke="black" stroke-width="0.1" width="10" x="20" y="9"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="25.0" y="12.0">60</text>
+<rect fill="#aaddff" height="6" stroke="black" stroke-width="0.1" width="10" x="30" y="9"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="35.0" y="12.0">60</text>
+<rect fill="#aaddff" height="6" stroke="black" stroke-width="0.1" width="8" x="40" y="21"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="44.0" y="24.0">48</text>
+<rect fill="#aaddff" height="6" stroke="black" stroke-width="0.1" width="8" x="40" y="15"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="44.0" y="18.0">48</text>
+<rect fill="#aaddff" height="6" stroke="black" stroke-width="0.1" width="8" x="40" y="9"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="44.0" y="12.0">48</text>
+<rect fill="#aaddff" height="5" stroke="black" stroke-width="0.1" width="8" x="52" y="28"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="56.0" y="30.5">40</text>
+<rect fill="#aaddff" height="5" stroke="black" stroke-width="0.1" width="8" x="60" y="28"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="64.0" y="30.5">40</text>
+<rect fill="#aaddff" height="5" stroke="black" stroke-width="0.1" width="8" x="68" y="28"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="72.0" y="30.5">40</text>
+<rect fill="#aaddff" height="5" stroke="black" stroke-width="0.1" width="8" x="72" y="23"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="76.0" y="25.5">40</text>
+<rect fill="#aaddff" height="6" stroke="black" stroke-width="0.1" width="8" x="52" y="22"/>
+<text font-family="Arial" font-size="1" text-anchor="middle" x="56.0" y="25.0">48</text>
+</svg>
