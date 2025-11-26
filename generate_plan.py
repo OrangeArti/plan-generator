@@ -14,10 +14,17 @@ Inventory (total 48 booths, 2,232 m²):
 from dataclasses import dataclass
 from typing import List, Dict, Tuple
 import math
+import time
+import random
 
 GRID = 0.25
 STEP = 1.0  # search step along edges
 HALL_W, HALL_H = 80.0, 40.0
+MAX_CANDIDATES_PER_AREA = 400  # cap candidate positions per booth type/zone to keep search tractable
+BRANCH_CANDIDATE_LIMIT = 200   # per-step expansion limit in search
+SEARCH_TIME_LIMIT = 25.0       # seconds
+SEARCH_NODE_LIMIT = 350_000
+GREEDY_RUNS = 500             # multi-start greedy attempts for a strong baseline
 
 def snap(v: float) -> float:
     return round(v / GRID) * GRID
@@ -258,28 +265,113 @@ def generate_candidates(area: int, zone: str) -> List[Rect]:
         cy = r.y + r.h / 2
         return (cx - 50.0) ** 2 + (cy - 40.0) ** 2
     cand_list = sorted(uniq.values(), key=dist)
-    return cand_list[:400]  # cap a bit higher
+    return cand_list[:MAX_CANDIDATES_PER_AREA]
 
-def greedy_place_with_skips(place_order: List[int], candidates_cache: Dict[Tuple[int, str], List[Rect]],
-                            blocking: List[Rect]) -> Tuple[List[Rect], List[int]]:
-    placed: List[Rect] = []
-    skipped: List[int] = []
-    for area in place_order:
-        placed_flag = False
-        for zone in ["A", "B"]:
-            for cand in candidates_cache[(area, zone)]:
-                if any(rects_overlap(cand, b) for b in placed + blocking):
-                    continue
-                if not touches_corridor(cand, CORRIDORS):
-                    continue
-                placed.append(cand.copy(label=f"{zone}_{len([p for p in placed if p.zone==zone])+1}", zone=zone))
-                placed_flag = True
-                break
-            if placed_flag:
-                break
-        if not placed_flag:
-            skipped.append(area)
-    return placed, skipped
+def branch_and_bound_layout(place_order: List[int], candidates_cache: Dict[Tuple[int, str], List[Rect]],
+                            blocking: List[Rect]) -> List[Rect]:
+    """Depth-first branch-and-bound with time/node limits."""
+    best_area = -1.0
+    best_count = -1
+    best_layout: List[Rect] = []
+    start_time = time.time()
+    nodes = 0
+
+    # suffix area for optimistic bound
+    suffix_area = [0] * (len(place_order) + 1)
+    for i in range(len(place_order) - 1, -1, -1):
+        suffix_area[i] = suffix_area[i + 1] + place_order[i]
+
+    # Precompute sampled candidate pools per area to avoid recalculating
+    sampled_candidates: Dict[int, List[Rect]] = {}
+    for area in set(place_order):
+        pool = candidates_cache[(area, "A")] + candidates_cache[(area, "B")]
+        if len(pool) > BRANCH_CANDIDATE_LIMIT:
+            front_keep = BRANCH_CANDIDATE_LIMIT // 2
+            front = pool[:front_keep]
+            remainder = pool[front_keep:]
+            stride = max(1, len(remainder) // max(1, BRANCH_CANDIDATE_LIMIT - front_keep))
+            spread = remainder[::stride][:BRANCH_CANDIDATE_LIMIT - len(front)]
+            pool = front + spread
+        sampled_candidates[area] = pool
+
+    # Greedy multi-start baseline to set a strong floor for best_area
+    def greedy_for_order(order: List[int]) -> List[Rect]:
+        placed: List[Rect] = []
+        for area in order:
+            placed_flag = False
+            for zone in ["A", "B"]:
+                for cand in candidates_cache[(area, zone)]:
+                    if any(rects_overlap(cand, b) for b in placed):
+                        continue
+                    if any(rects_overlap(cand, b) for b in blocking):
+                        continue
+                    if not touches_corridor(cand, CORRIDORS):
+                        continue
+                    placed.append(cand)
+                    placed_flag = True
+                    break
+                if placed_flag:
+                    break
+        return placed
+
+    best_area = -1.0
+    best_count = -1
+    best_layout: List[Rect] = []
+    rng = random.Random(0)
+    for run in range(GREEDY_RUNS):
+        order = place_order.copy()
+        rng.shuffle(order)
+        layout = greedy_for_order(order)
+        area_val = sum(int(round(r.w * r.h)) for r in layout)
+        if area_val > best_area or (math.isclose(area_val, best_area, abs_tol=1e-6) and len(layout) > best_count):
+            best_area = area_val
+            best_count = len(layout)
+            best_layout = layout.copy()
+
+    def better(state_area: float, state_count: int) -> bool:
+        if state_area > best_area + 1e-6:
+            return True
+        if math.isclose(state_area, best_area, abs_tol=1e-6) and state_count > best_count:
+            return True
+        return False
+
+    def dfs(idx: int, placed: List[Rect], acc: float) -> None:
+        nonlocal best_area, best_layout, best_count, nodes
+        # Time/node guards
+        if time.time() - start_time > SEARCH_TIME_LIMIT:
+            return
+        if nodes >= SEARCH_NODE_LIMIT:
+            return
+        nodes += 1
+
+        # optimistic bound
+        if acc + suffix_area[idx] < best_area - 1e-6:
+            return
+
+        if idx == len(place_order):
+            if better(acc, len(placed)):
+                best_area = acc
+                best_count = len(placed)
+                best_layout = placed.copy()
+            return
+
+        area = place_order[idx]
+        for cand in sampled_candidates[area]:
+            if not touches_corridor(cand, CORRIDORS):
+                continue
+            if any(rects_overlap(cand, b) for b in blocking):
+                continue
+            if any(rects_overlap(cand, b) for b in placed):
+                continue
+            placed.append(cand)
+            dfs(idx + 1, placed, acc + area)
+            placed.pop()
+
+        # Option to skip this booth
+        dfs(idx + 1, placed, acc)
+
+    dfs(0, [], 0.0)
+    return best_layout
 
 def booth_category(area: int) -> str:
     """Map booth area to one of four visual categories."""
@@ -316,9 +408,27 @@ def main():
             if not candidates_cache[(a, z)]:
                 raise RuntimeError(f"No candidates for area {a} in zone {z}")
 
-    placed_inner, skipped = greedy_place_with_skips(place_order, candidates_cache, blocking)
+    placed_inner = branch_and_bound_layout(place_order, candidates_cache, blocking)
+    # Relabel inner booths sequentially per zone for readability
+    zone_counters = {"A": 0, "B": 0}
+    relabeled_inner: List[Rect] = []
+    for b in placed_inner:
+        zone_counters[b.zone] = zone_counters.get(b.zone, 0) + 1
+        relabeled_inner.append(b.copy(label=f"{b.zone}_{zone_counters[b.zone]}"))
 
-    all_booths = outer_booths + placed_inner
+    # Compute skipped list by multiset difference from requested inventory
+    placed_area_counts: Dict[int, int] = {}
+    for b in relabeled_inner:
+        area_key = int(round(b.w * b.h))
+        placed_area_counts[area_key] = placed_area_counts.get(area_key, 0) + 1
+    skipped: List[int] = []
+    for a in place_order:
+        if placed_area_counts.get(a, 0) > 0:
+            placed_area_counts[a] -= 1
+        else:
+            skipped.append(a)
+
+    all_booths = outer_booths + relabeled_inner
     # Validation: counts and area
     counts = {}
     total_area = 0
